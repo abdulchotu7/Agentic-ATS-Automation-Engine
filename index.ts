@@ -71,7 +71,7 @@ async function fillPhoneDetails(page: Page, countryQuery: string, phoneNumber: s
 /**
  * Handles professional details selection using robust visible-only filtering.
  */
-async function clickActionButtons(page: Page) {
+async function fillExperienceDetails(page: Page) {
     console.log('🔘 Adding experience entry...');
     await page.getByLabel('Add experience entry').click();
 
@@ -130,6 +130,85 @@ async function clickActionButtons(page: Page) {
     console.log('✅ Experience entry details filled.');
 }
 
+async function fillEducationDetails(page: Page) {
+    console.log('🔘 Adding education entry...');
+    await page.getByLabel('Add education entry').click();
+
+    const institutionInput = page.getByRole("combobox", { name: "Institution" })
+    await institutionInput.pressSequentially("University of California, Berkeley", { delay: 100 });
+    await page.waitForTimeout(500);
+    const institutionOptions = page.locator('spl-select-option').filter({ visible: true });
+    await institutionOptions.first().waitFor({ state: 'visible' });
+    console.log(`📋 Found ${await institutionOptions.count()} institution options.`);
+    await institutionOptions.first().click();
+    await page.waitForTimeout(300);
+
+    await page.getByLabel("Major").pressSequentially("Computer Science", { delay: 100 });
+    await page.waitForTimeout(500);
+
+    await page.getByLabel("Degree").pressSequentially("Master of Science", { delay: 100 });
+    await page.waitForTimeout(500);
+
+    await page.getByLabel("Description").pressSequentially("Developed and maintained full-stack applications using Python and React.", { delay: 100 });
+    await page.waitForTimeout(500);
+
+    await page.getByRole("textbox", { name: "From" }).pressSequentially('2004-04-14', { delay: 100 });
+    await page.getByRole("textbox", { name: "To" }).pressSequentially('2010-04-14', { delay: 100 });
+
+    await page.getByRole("button", { name: "Save" }).click();
+    await page.waitForTimeout(1000);
+    console.log('✅ Education entry details filled.');
+
+
+
+}
+
+async function fillAdditionalDetails(page: Page) {
+    console.log('🔘 Adding additional details...');
+    const countryInput = page.getByRole("combobox", { name: "What country do you plan to work from?" })
+    await countryInput.pressSequentially("Germany", { delay: 100 });
+    await page.waitForTimeout(500);
+    const countryOptions = page.locator('spl-select-option').filter({ visible: true });
+    await countryOptions.first().waitFor({ state: 'visible' });
+    console.log(`📋 Found ${await countryOptions.count()} country options.`);
+    await countryOptions.first().click();
+    await page.waitForTimeout(300);
+
+    const radioBtn = page.getByRole("radio", { name: "Yes" })
+    await radioBtn.click();
+    await page.waitForTimeout(300);
+
+    const englishProficiency = page.getByRole("combobox", { name: "What is your level of proficiency in English?" })
+    await englishProficiency.click();
+    await page.waitForTimeout(500);
+    const englishProficiencyOptions = page.locator('spl-select-option').filter({ visible: true });
+    await englishProficiencyOptions.first().waitFor({ state: 'visible' });
+    console.log(`📋 Found ${await englishProficiencyOptions.count()} english proficiency options.`);
+    await englishProficiencyOptions.first().click();
+    await page.waitForTimeout(300);
+
+    // Check the policy agreement or similar checkbox
+    console.log('🔘 Checking policy checkbox...');
+    const policyCheckbox = page.locator('input#noPolicy');
+    await policyCheckbox.check();
+    await page.waitForTimeout(300);
+    const saveButton = page.getByRole('button', { name: 'Submit' });
+    await saveButton.click();
+
+    console.log('✅ Additional details filled.');
+}
+
+
+/**
+ * Uploads a local file to the application.
+ */
+async function uploadResume(page: Page, filePath: string) {
+    console.log(`📤 Uploading file: ${filePath}...`);
+    // setInputFiles handles hidden file inputs automatically
+    await page.setInputFiles('input#file-input', filePath);
+    console.log('✅ File uploaded successfully.');
+}
+
 /**
  * Main orchestration function for the job application process.
  */
@@ -143,10 +222,20 @@ async function runJobApplication() {
         console.log('🔘 Clicking "I\'m interested"...');
         await page.locator('#st-apply').click();
 
-        // await fillPersonalDetails(page, 'John', 'Doe', 'john.doe@example.com');
-        // await selectLocation(page, 'New');
-        // await fillPhoneDetails(page, 'Uni', '12345678900');
-        await clickActionButtons(page);
+        // 1. Upload Resume First
+        await uploadResume(page, '/Users/consultadd/projects/playwright/resume.txt');
+
+        // 2. Fill Rest of the form
+        await fillPersonalDetails(page, 'John', 'Doe', 'john.doe@example.com');
+        await selectLocation(page, 'New');
+        await fillPhoneDetails(page, 'Uni', '12345678900');
+        await fillExperienceDetails(page);
+        await fillEducationDetails(page);
+
+        await page.getByRole("button", { name: "Next" }).click();
+        await page.waitForTimeout(1000);
+
+        await fillAdditionalDetails(page);
 
         console.log('🎉 Automation flow reached the end successfully.');
 
