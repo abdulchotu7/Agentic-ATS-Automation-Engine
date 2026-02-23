@@ -1,6 +1,6 @@
 import { chromium } from 'playwright';
 import type { Browser, Page } from 'playwright';
-
+import { answerScreeningQuestions } from "./agent/screeningAgent.ts";
 /**
  * Connects to an existing Chrome browser instance via CDP.
  */
@@ -86,6 +86,7 @@ async function detectAndHandleCaptcha(page: Page) {
 
 async function fillPersonalDetails(page: Page, firstName: string, lastName: string, email: string) {
     console.log('⌨️ Filling in personal details...');
+    await page.locator('input[type="file"][name="resume"]').setInputFiles('./temp.txt');
     await page.getByLabel("Full name").pressSequentially(`${firstName} ${lastName}`, { delay: 100 });
     await page.getByLabel("Email").pressSequentially(email, { delay: 100 });
     await page.getByLabel("Phone").pressSequentially("1234567890", { delay: 100 });
@@ -102,15 +103,17 @@ async function fillPersonalDetails(page: Page, firstName: string, lastName: stri
     console.log(`📋 Found ${count} location options.`);
 
     if (count > 0) {
-    await dropdownOptions.first().click();
+        await dropdownOptions.first().click();
     }
 
     await page.getByLabel("Current company").pressSequentially("Adobe", { delay: 100 });
     await page.getByLabel("LinkedIn URL").pressSequentially("https://www.linkedin.com/in/johndoe", { delay: 100 });
 
-    console.log('🔘 Handling Work Authorization...');
-    const workAuthQuestion = page.locator('.application-question').filter({ hasText: 'Do you have the rights to work in country advertised?' });
-    await workAuthQuestion.locator('input[value="Yes"]').click();
+    await answerScreeningQuestions(page);
+
+    // console.log('🔘 Handling Work Authorization...');
+    // const workAuthQuestion = page.locator('.application-question').filter({ hasText: 'Do you have the rights to work in country advertised?' });
+    // await workAuthQuestion.locator('input[value="Yes"]').click();
 }
 
 
@@ -119,7 +122,7 @@ async function runJobApplication() {
         const { page } = await connectToBrowser();
 
         console.log('🌐 Navigating to application page...');
-        await page.goto('https://jobs.lever.co/wgsn/3a624ace-063b-4b70-ac12-3262137224bf');
+        await page.goto('https://jobs.lever.co/mistral/c79ff8ed-6689-4dda-aec6-979a5dc767d0');
 
         console.log('🔘 Clicking "Apply for this job"...');
         await page.getByRole('link', { name: 'Apply for this job' }).first().click();
