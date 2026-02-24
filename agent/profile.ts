@@ -2,7 +2,7 @@ export const candidateProfile = `
 Candidate Name: LAKS VANSH
 Role: Senior Data Engineer
 Email: vanshmail121@gmail.com
-Phone: +1 920 677 4245
+Phone: 9206774245
 Location: New York, NY, USA
 
 Skills:

@@ -80,7 +80,7 @@ RULES:
         console.log("🚀 Running MCP agent...");
         const runStream = await run(
             agent,
-            `Call browser_snapshot now. If the current tab is not the job application form, use browser_tabs to switch to the correct tab first. Then read each field's label and ref from the snapshot and fill them one by one using the exact ref codes. After all fields are filled, click the Submit button.`,
+            `Call browser_snapshot now. Look at the "Open tabs" list and find the tab whose URL contains "${currentUrl}". If the current tab does not match, use browser_tabs with action="select" and the correct tab index to switch to it, then call browser_snapshot again. Once you are on the correct tab, read each field's label and ref from the snapshot and fill any EMPTY fields one by one using the exact ref codes. After all fields are filled, click the Submit button.`,
             {
                 maxTurns: 30,
                 stream: true
