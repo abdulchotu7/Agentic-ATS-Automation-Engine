@@ -2,6 +2,7 @@ import type { Page } from "playwright";
 import { client } from "./openaiClient.ts";
 import { candidateProfile } from "./profile.ts";
 import { executeAction } from "./screeningExecutor.ts";
+import { runMcpAgent } from "./mcpAgent.ts";
 
 export async function answerScreeningQuestions(page: Page) {
 
@@ -79,7 +80,8 @@ export async function answerScreeningQuestions(page: Page) {
     });
 
     if (!questions.length) {
-        console.log("✅ No screening questions found.");
+        console.log("⚠️ No .application-question containers found. Falling back to MCP agent...");
+        await runMcpAgent(page);
         return;
     }
 
@@ -134,10 +136,24 @@ Return ONLY JSON array:
         return;
     }
 
-    // Execute actions
+    // Execute actions, tracking failures
+    let failedCount = 0;
     for (const action of actions) {
-        await executeAction(page, action);
+        try {
+            await executeAction(page, action);
+        } catch (e: any) {
+            console.log(`⚠️ Action failed: ${e.message}`);
+            failedCount++;
+        }
     }
 
-    console.log("✅ Screening questions completed.");
+    if (failedCount > 0) {
+        console.log(`⚠️ ${failedCount} actions failed.`);
+    } else {
+        console.log("✅ Fast scanner completed.");
+    }
+
+    // Always run MCP agent as a final cross-check
+    console.log("🔍 Running MCP agent cross-check...");
+    await runMcpAgent(page);
 }

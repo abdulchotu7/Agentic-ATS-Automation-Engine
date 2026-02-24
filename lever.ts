@@ -1,6 +1,9 @@
 import { chromium } from 'playwright';
 import type { Browser, Page } from 'playwright';
 import { answerScreeningQuestions } from "./agent/screeningAgent.ts";
+
+// Enable debug logging for the OpenAI Agents SDK to show thought process/reasoning steps
+process.env.DEBUG = "openai:agents:*";
 /**
  * Connects to an existing Chrome browser instance via CDP.
  */
@@ -87,8 +90,8 @@ async function detectAndHandleCaptcha(page: Page) {
 async function fillPersonalDetails(page: Page, firstName: string, lastName: string, email: string) {
     console.log('⌨️ Filling in personal details...');
     await page.locator('input[type="file"][name="resume"]').setInputFiles('./temp.txt');
-    await page.getByLabel("Full name").pressSequentially(`${firstName} ${lastName}`, { delay: 100 });
-    await page.getByLabel("Email").pressSequentially(email, { delay: 100 });
+    // await page.getByLabel("Full name").pressSequentially(`${firstName} ${lastName}`, { delay: 100 });
+    // await page.getByLabel("Email").pressSequentially(email, { delay: 100 });
     await page.getByLabel("Phone").pressSequentially("1234567890", { delay: 100 });
     await page.getByLabel("Current location").click();
     await detectAndHandleCaptcha(page);
@@ -122,7 +125,7 @@ async function runJobApplication() {
         const { page } = await connectToBrowser();
 
         console.log('🌐 Navigating to application page...');
-        await page.goto('https://jobs.lever.co/mistral/c79ff8ed-6689-4dda-aec6-979a5dc767d0');
+        await page.goto('https://jobs.lever.co/findem/e74f2710-a87c-4532-8cdf-9f5d41ad2e06');
 
         console.log('🔘 Clicking "Apply for this job"...');
         await page.getByRole('link', { name: 'Apply for this job' }).first().click();

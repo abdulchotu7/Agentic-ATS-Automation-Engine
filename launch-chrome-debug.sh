@@ -11,22 +11,15 @@ else
 fi
 
 echo ""
-echo "🚀 Launching Chrome with remote debugging on port 9222..."
-echo "   Using your Chrome profile (with existing sessions)..."
-
-# Use a copy of the default profile to avoid conflicts
+# Use an isolated profile for Playwright to avoid conflicts and security blocks
 CHROME_PROFILE="$HOME/Library/Application Support/Google/Chrome-Playwright"
 
-# Copy the default profile if it doesn't exist
-if [ ! -d "$CHROME_PROFILE" ]; then
-    echo "   📋 Creating Chrome profile copy for Playwright..."
-    cp -r "$HOME/Library/Application Support/Google/Chrome" "$CHROME_PROFILE" 2>/dev/null || true
-fi
+echo "   📋 Using isolated profile at: $CHROME_PROFILE"
+echo "   💡 Note: You may need to log into LinkedIn/Google on this profile once."
 
 /Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome \
   --remote-debugging-port=9222 \
-  --user-data-dir="$CHROME_PROFILE" \
-  --profile-directory="Default" &
+  --user-data-dir="$CHROME_PROFILE" &
 
 sleep 3
 

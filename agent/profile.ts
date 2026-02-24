@@ -1,19 +1,24 @@
 export const candidateProfile = `
-Candidate Name: John Doe
-Role: Software Engineer
+Candidate Name: LAKS VANSH
+Role: Senior Data Engineer
+Email: vanshmail121@gmail.com
+Phone: +1 920 677 4245
+Location: New York, NY, USA
 
 Skills:
-- Python
-- React
-- Node.js
-- Machine Learning
+- Python, SQL, AWS, Snowflake
+- ETL, Data Engineering, Data Modeling
+- Pandas, NumPy, Flask, FastAPI
+- React, TypeScript
 
 Experience:
-- Built full-stack applications
-- ML internship experience
-- Strong problem solving skills
+1. Senior Data Engineer @ BLUE OWL (Jan 2024 - Present):
+   Contributed to a large-scale financial market data and risk management platform, processing complex investor, fund, and portfolio datasets.
+2. Senior Developer @ AMAZON (Dec 2020 - Jun 2023):
+   Led the development of an internal treasury and financial analytics platform providing real-time visibility into enterprise cash flows.
+3. Python Developer @ ACCENTURE (May 2019 - Dec 2020):
+   Developed and maintained backend services using Python (Flask) and Node.js for operational dashboards and reporting views.
 
-Location: Open to relocation
 Work Authorization: Yes
 
 Tone:
