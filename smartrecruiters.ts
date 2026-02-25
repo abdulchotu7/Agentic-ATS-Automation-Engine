@@ -1,20 +1,31 @@
 import type { Page } from 'playwright';
-import { connectToBrowser, runWithErrorHandler, tryStep } from './utils/browser.ts';
+import type { ProfileData } from './types.ts';
+import { connectToBrowser, runWithErrorHandler, tryStep, fillIfEmpty } from './utils/browser.ts';
 import { client } from './agent/openaiClient.ts';
 import { runMcpAgent } from './agent/mcpAgent.ts';
 
 /**
  * Fills in basic personal information on the application form.
+ * Only fills fields that are still empty after resume auto-fill.
  */
-async function fillPersonalDetails(page: Page, firstName: string, lastName: string, email: string) {
-    console.log('⌨️ Filling in personal details...');
+async function fillPersonalDetails(page: Page, profile: ProfileData) {
+    console.log('⌨️ Filling in personal details (only empty fields)...');
 
-    const emailValue = await page.locator('input#email-input').inputValue();
-    if (emailValue) {
-        await page.locator('input#confirm-email-input').pressSequentially(emailValue, { delay: 100 });
+    const emailInput = page.locator('input#email-input');
+    const emailValue = await emailInput.inputValue().catch(() => '');
+    if (emailValue && emailValue.trim().length > 0) {
+        console.log(`   ⏭️ Email already filled: "${emailValue}"`);
+        // Still need confirm email
+        const confirmValue = await page.locator('input#confirm-email-input').inputValue().catch(() => '');
+        if (!confirmValue || confirmValue.trim().length === 0) {
+            await page.locator('input#confirm-email-input').pressSequentially(emailValue, { delay: 100 });
+            console.log('   ✏️ Confirm Email filled');
+        }
     } else {
-        await page.locator('input#email-input').pressSequentially(email, { delay: 100 });
+        const email = profile.contact.email;
+        await emailInput.pressSequentially(email, { delay: 100 });
         await page.locator('input#confirm-email-input').pressSequentially(email, { delay: 100 });
+        console.log('   ✏️ Email + Confirm Email filled');
     }
 }
 
@@ -51,22 +62,49 @@ async function uploadResume(page: Page, filePath: string) {
     console.log(`📤 Uploading file: ${filePath}...`);
     await page.setInputFiles('input#file-input', filePath);
     console.log('✅ File uploaded successfully.');
+    console.log('⏳ Waiting 3s for auto-fill from resume...');
+    await page.waitForTimeout(3000);
 }
 
-runWithErrorHandler(async () => {
-    const { page } = await connectToBrowser();
-
-    console.log('🌐 Navigating to application page...');
-    await page.goto('https://jobs.smartrecruiters.com/T-SystemsICTIndiaPvtLtd1/744000106265935-system-engineer');
+/**
+ * Exported handler for SmartRecruiters job applications.
+ * Called by the router with dynamic URL and profile data.
+ */
+export async function runSmartRecruiters(page: Page, jobUrl: string, profile: ProfileData, resumePath: string): Promise<void> {
+    console.log('🌐 Navigating to SmartRecruiters application page...');
+    await page.goto(jobUrl);
     console.log('🔘 Clicking "I\'m interested"...');
     await page.getByRole('link', { name: "I'm interested" }).first().click();
 
-    await tryStep('Upload Resume', () => uploadResume(page, '/Users/consultadd/projects/ResumeProfilerandApply/uploads/20260213_185222_LAKS_VANSH_Resume._20260204-160700.docx'));
-    await page.waitForTimeout(1000);
-    await tryStep('Personal Details', () => fillPersonalDetails(page, 'John', 'Doe', 'john.doe@example.com'));
-    await tryStep('Experience Details', () => fillExperienceDetails(page));
+    // Deterministic steps — wrapped so failures don't skip MCP fallback
+    try {
+        await tryStep('Upload Resume', () => uploadResume(page, resumePath));
+        await page.waitForTimeout(1000);
+        await tryStep('Personal Details', () => fillPersonalDetails(page, profile));
+        await tryStep('Experience Details', () => fillExperienceDetails(page));
 
-    await page.getByRole("button", { name: "Next" }).click();
-    await page.waitForTimeout(1000);
+        // Try clicking Next — may not exist on all SmartRecruiters forms
+        try {
+            await page.getByRole("button", { name: "Next" }).click({ timeout: 5000 });
+            await page.waitForTimeout(1000);
+        } catch {
+            console.log('⚠️ No "Next" button found or click failed — MCP agent will handle navigation.');
+        }
+    } catch (error: any) {
+        console.log(`⚠️ Deterministic steps failed: ${error.message} — MCP agent will take over.`);
+    }
+
+    // MCP agent ALWAYS runs — handles remaining fields, navigation, and submission
     await runMcpAgent(page);
-});
+}
+
+// ── Standalone mode (run directly) ──────────────────────────────────────────
+if (process.argv[1]?.endsWith('smartrecruiters.ts')) {
+    runWithErrorHandler(async () => {
+        const { page } = await connectToBrowser();
+        const url = process.argv[2] || 'https://jobs.smartrecruiters.com/T-SystemsICTIndiaPvtLtd1/744000106265935-system-engineer';
+        const { readFileSync } = await import('fs');
+        const data = JSON.parse(readFileSync('/Users/consultadd/projects/ResumeProfilerandApply/result.json', 'utf-8'));
+        await runSmartRecruiters(page, url, data.application_data, data.resume_input);
+    });
+}

@@ -1,6 +1,6 @@
 import { Agent, run } from "@openai/agents";
 import { MCPServerStdio } from "@openai/agents-core";
-import { candidateProfile } from "./profile.ts";
+import { getCandidateProfile } from "./profile.ts";
 
 export async function runMcpAgent(page: any) {
     console.log("🤖 MCP Agent: Starting intelligent form cross-check...");
@@ -8,6 +8,9 @@ export async function runMcpAgent(page: any) {
     // Get the current page URL so the MCP agent knows what page to work on
     const currentUrl = page.url();
     console.log("📍 Current page URL:", currentUrl);
+
+    // Load candidate profile at runtime (not import time)
+    const candidateProfile = getCandidateProfile();
 
     // Launch official Playwright MCP connected to existing browser
     const playwrightMcp = new MCPServerStdio({
@@ -83,14 +86,44 @@ RULES:
 - DO NOT navigate away from the current page or reload it.
 - NEVER finish or output a final message if there are validation errors. You MUST fix them and resubmit.
 - If you see a "Submit" or "Save" button, click it. If you see "Next", click it to proceed to the next page.
-- NEVER stop early. Keep filling fields and submitting until you reach a confirmation/success page.`,
+- NEVER stop early. Keep filling fields and submitting until you reach a confirmation/success page.
+
+CRITICAL — PRE-SUBMIT FIELD CHECK:
+- BEFORE clicking Submit, call browser_snapshot and carefully scan EVERY field on the page.
+- If ANY required field (marked with ✱ or *) is empty, fill it IMMEDIATELY using browser_type/browser_click.
+- Check ALL fields — text inputs, dropdowns, radio buttons, checkboxes. Do not assume the fast scanner handled everything correctly.
+- Only click Submit AFTER you have verified every visible field is filled.
+
+CRITICAL — SUBMISSION VERIFICATION:
+- After clicking Submit, you MUST call browser_snapshot IMMEDIATELY.
+- Look at the page content for confirmation keywords: "thank you", "application received", "submitted successfully", "confirmation", or any success message.
+- If the URL changed to include "thanks", "confirmation", or "success" — that confirms submission.
+- If you see a confirmation/thank you page → report success with the exact confirmation message.
+- If the page still shows the form (no confirmation) → there are likely validation errors. Read the snapshot, fix the errors, and click Submit again.
+- NEVER report success unless you see a clear confirmation message or page change.
+
+CRITICAL — DO NOT OUTPUT TEXT PLANS:
+- NEVER respond with a text list of "I will fill these fields..." as your final output. That is NOT completing the task.
+- You MUST call browser tools (browser_type, browser_click, etc.) to ACTUALLY fill every field. Listing fields is not filling them.
+- Your final text response should ONLY be a confirmation AFTER you have verified the submission via browser_snapshot and seen a confirmation page.
+- If you find empty fields, your VERY NEXT action must be a browser tool call, NOT a text summary.`,
             mcpServers: [playwrightMcp],
         });
 
         console.log("🚀 Running MCP agent...");
         const runStream = await run(
             agent,
-            `Call browser_snapshot now. Look at the "Open tabs" list and find the tab whose URL contains "${currentUrl}". If the current tab does not match, use browser_tabs with action="select" and the correct tab index to switch to it, then call browser_snapshot again. Once you are on the correct tab, read each field's label and ref from the snapshot and fill any EMPTY fields one by one using the exact ref codes. After all fields are filled, click the Submit button.`,
+            `Call browser_snapshot now. Look at the "Open tabs" list and find the tab whose URL contains "${currentUrl}". If the current tab does not match, use browser_tabs with action="select" and the correct tab index to switch to it, then call browser_snapshot again.
+
+Once on the correct tab:
+1. SCAN every field in the snapshot. Fill ANY empty field immediately using browser_type/browser_click — do NOT list them first.
+2. After ALL fields are filled, call browser_snapshot one more time to double-check nothing was missed.
+3. Click the Submit/Save button.
+4. Call browser_snapshot IMMEDIATELY after submit.
+5. Check for a "Thank you" / "Application received" / "Confirmation" message or a URL change to a success page.
+6. If you see confirmation → report success with the exact message.
+7. If the form is still showing → fix any validation errors, fill missing fields, and submit again.
+NEVER report success unless you see a confirmation page.`,
             {
                 maxTurns: 60,
                 stream: true

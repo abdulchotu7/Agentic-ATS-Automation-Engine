@@ -42,3 +42,27 @@ export async function tryStep(name: string, fn: () => Promise<void>) {
         console.warn(`⚠️ Step "${name}" failed: ${error.message} — MCP agent will handle it.`);
     }
 }
+
+/**
+ * Fills a text field ONLY if it's currently empty.
+ * Returns true if the field was filled, false if it already had a value.
+ * This respects auto-fill from resume uploads.
+ */
+export async function fillIfEmpty(
+    locator: any,
+    value: string,
+    options: { delay?: number; label?: string } = {},
+): Promise<boolean> {
+    try {
+        const current = await locator.inputValue();
+        if (current && current.trim().length > 0) {
+            console.log(`   ⏭️ ${options.label || 'Field'} already filled: "${current.substring(0, 40)}..."`);
+            return false;
+        }
+    } catch {
+        // inputValue might fail on non-input elements — fill anyway
+    }
+    await locator.pressSequentially(value, { delay: options.delay ?? 100 });
+    console.log(`   ✏️ ${options.label || 'Field'} filled: "${value.substring(0, 40)}"`);
+    return true;
+}

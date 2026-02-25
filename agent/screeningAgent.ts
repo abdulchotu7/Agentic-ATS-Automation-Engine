@@ -1,6 +1,6 @@
 import type { Page } from "playwright";
 import { client } from "./openaiClient.ts";
-import { candidateProfile } from "./profile.ts";
+import { getCandidateProfile } from "./profile.ts";
 import { executeAction } from "./screeningExecutor.ts";
 import { runMcpAgent } from "./mcpAgent.ts";
 
@@ -109,7 +109,7 @@ Rules:
                 role: "user",
                 content: `
 Candidate profile:
-${candidateProfile}
+${getCandidateProfile()}
 
 Questions:
 ${JSON.stringify(questions, null, 2)}

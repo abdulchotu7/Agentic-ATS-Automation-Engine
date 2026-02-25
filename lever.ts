@@ -1,5 +1,6 @@
 import type { Page } from 'playwright';
-import { connectToBrowser, runWithErrorHandler, tryStep } from './utils/browser.ts';
+import type { ProfileData } from './types.ts';
+import { connectToBrowser, runWithErrorHandler, tryStep, fillIfEmpty } from './utils/browser.ts';
 import { answerScreeningQuestions } from './agent/screeningAgent.ts';
 
 /**
@@ -69,38 +70,71 @@ async function detectAndHandleCaptcha(page: Page) {
     return false;
 }
 
-async function fillPersonalDetails(page: Page, firstName: string, lastName: string, email: string) {
-    console.log('⌨️ Filling in personal details...');
-    await page.locator('input[type="file"][name="resume"]').setInputFiles('./temp.txt');
-    await page.getByLabel("Phone").pressSequentially("1234567890", { delay: 100 });
+async function fillPersonalDetails(page: Page, profile: ProfileData, resumePath: string) {
+    console.log('📤 Uploading resume...');
+    await page.locator('input[type="file"][name="resume"]').setInputFiles(resumePath);
+    console.log('⏳ Waiting 3s for auto-fill from resume...');
+    await page.waitForTimeout(3000);
+
+    console.log('⌨️ Filling personal details (only empty fields)...');
+    await fillIfEmpty(page.getByLabel("Phone"), profile.contact.phone || "1234567890", { label: "Phone" });
+
     await page.getByLabel("Current location").click();
     await detectAndHandleCaptcha(page);
 
-    await page.getByLabel("Current location").pressSequentially("New York", { delay: 100 });
-    const dropdownOptions = page.locator(".dropdown-location");
-    await dropdownOptions.first().waitFor({ state: "visible" });
-
-    const count = await dropdownOptions.count();
-    console.log(`📋 Found ${count} location options.`);
-    if (count > 0) {
-        await dropdownOptions.first().click();
+    // Location — check if already filled
+    const locationField = page.getByLabel("Current location");
+    const locationValue = await locationField.inputValue().catch(() => '');
+    if (!locationValue || locationValue.trim().length === 0) {
+        const city = profile.contact.city || 'New York';
+        await locationField.pressSequentially(city, { delay: 100 });
+        const dropdownOptions = page.locator(".dropdown-location");
+        await dropdownOptions.first().waitFor({ state: "visible" });
+        const count = await dropdownOptions.count();
+        console.log(`📋 Found ${count} location options.`);
+        if (count > 0) {
+            await dropdownOptions.first().click();
+        }
+    } else {
+        console.log(`   ⏭️ Current location already filled: "${locationValue}"`);
+        // Still need to handle the dropdown if it appeared
+        const dropdownOptions = page.locator(".dropdown-location");
+        const count = await dropdownOptions.count();
+        if (count > 0) {
+            console.log(`📋 Found ${count} location options.`);
+            await dropdownOptions.first().click();
+        }
     }
 
-    await page.getByLabel("Current company").pressSequentially("Adobe", { delay: 100 });
-    await page.getByLabel("LinkedIn URL").pressSequentially("https://www.linkedin.com/in/johndoe", { delay: 100 });
+    const currentRole = profile.current_or_most_recent_role;
+    await fillIfEmpty(page.getByLabel("Current company"), currentRole?.company || "N/A", { label: "Current company" });
+    await fillIfEmpty(page.getByLabel("LinkedIn URL"), profile.contact.linkedin_url || "https://linkedin.com/in/profile", { label: "LinkedIn URL" });
 
     await answerScreeningQuestions(page);
 }
 
-runWithErrorHandler(async () => {
-    const { page } = await connectToBrowser();
-
-    console.log('🌐 Navigating to application page...');
-    await page.goto('https://jobs.lever.co/findem/e74f2710-a87c-4532-8cdf-9f5d41ad2e06');
+/**
+ * Exported handler for Lever job applications.
+ * Called by the router with dynamic URL and profile data.
+ */
+export async function runLever(page: Page, jobUrl: string, profile: ProfileData, resumePath: string): Promise<void> {
+    console.log('🌐 Navigating to Lever application page...');
+    await page.goto(jobUrl);
 
     console.log('🔘 Clicking "Apply for this job"...');
     await page.getByRole('link', { name: 'Apply for this job' }).first().click();
 
     await tryStep('CAPTCHA Check', async () => { await detectAndHandleCaptcha(page); });
-    await tryStep('Personal Details', () => fillPersonalDetails(page, 'John', 'Doe', 'john.doe@example.com'));
-});
+    await tryStep('Personal Details', () => fillPersonalDetails(page, profile, resumePath));
+}
+
+// ── Standalone mode (run directly) ──────────────────────────────────────────
+if (process.argv[1]?.endsWith('lever.ts')) {
+    runWithErrorHandler(async () => {
+        const { page } = await connectToBrowser();
+        const url = process.argv[2] || 'https://jobs.lever.co/findem/e74f2710-a87c-4532-8cdf-9f5d41ad2e06';
+        const { readFileSync } = await import('fs');
+        const data = JSON.parse(readFileSync('/Users/consultadd/projects/ResumeProfilerandApply/result.json', 'utf-8'));
+        await runLever(page, url, data.application_data, data.resume_input);
+    });
+}

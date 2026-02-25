@@ -1,30 +1,40 @@
 import { readFileSync } from 'fs';
 
-const PROFILE_JSON_PATH = '/Users/consultadd/projects/ResumeProfilerandApply/result.json';
+// ── Lazy-loaded profile ─────────────────────────────────────────────────────
+// The result JSON path comes from RESULT_JSON_PATH env var (set by router.ts)
+// or falls back to the hardcoded path for standalone usage.
+// Lazy: the file is read on first access, NOT at import time.
 
-const raw = JSON.parse(readFileSync(PROFILE_JSON_PATH, 'utf-8'));
-export const resumePath: string = raw.resume_input;
+let _cached: { profile: string; resumePath: string } | null = null;
 
-function loadProfile(): string {
+function _load(): { profile: string; resumePath: string } {
+   if (_cached) return _cached;
+
+   const jsonPath = process.env.RESULT_JSON_PATH
+      || '/Users/consultadd/projects/ResumeProfilerandApply/result.json';
+
+   console.log(`📄 Loading profile from: ${jsonPath}`);
+   const raw = JSON.parse(readFileSync(jsonPath, 'utf-8'));
+   const resumePath: string = raw.resume_input;
    const data = raw.application_data;
    const contact = data.contact;
 
-   const experience = data.work_experience
+   const experience = (data.work_experience || [])
       .map((exp: any, i: number) => {
          const end = exp.end_date || 'Present';
          return `${i + 1}. ${exp.job_title} @ ${exp.company} (${exp.start_date} - ${end}):\n   ${exp.summary}`;
       })
       .join('\n');
 
-   const skills = data.skills.join(', ');
+   const skills = (data.skills || []).join(', ');
 
-   return `
-Candidate Name: ${contact.full_name}
+   const profile = `
+Candidate Name: ${contact.first_name} ${contact.last_name}
 Role: ${data.current_or_most_recent_role.job_title}
 Email: ${contact.email}
 Phone: ${contact.phone}
 Location: ${contact.city}, ${contact.state}, ${contact.country}
-LinkedIn: ${contact.linkedin_url || 'https://linkedin.com/in/laksvansh'}
+LinkedIn: ${contact.linkedin_url || 'https://linkedin.com/in/profile'}
 
 Skills: ${skills}
 
@@ -38,6 +48,17 @@ Zip Code: 10001
 
 Tone: Professional, concise, confident.
 `.trim();
+
+   _cached = { profile, resumePath };
+   return _cached;
 }
 
-export const candidateProfile = loadProfile();
+/** Get the candidate profile string (lazy-loaded on first call). */
+export function getCandidateProfile(): string {
+   return _load().profile;
+}
+
+/** Get the resume file path (lazy-loaded on first call). */
+export function getResumePath(): string {
+   return _load().resumePath;
+}

@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "dev": "tsx index.ts",
+    "router": "tsx router.ts",
     "build": "tsc"
   },
   "keywords": [],

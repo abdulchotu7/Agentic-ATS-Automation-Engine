@@ -88,7 +88,7 @@ Given a resume (text), output a JSON object with exactly these keys:
 1) "search_query": A short search string to find relevant jobs (e.g. "Software Engineer Python" or "Data Analyst remote"). Use the person's target role, key skills, and experience. One line.
 
 2) "application_data": An object with the fields that job application sites (Greenhouse, Lever, Workday, BambooHR, Jobvite, iCIMS, Jazz, Workable) typically require. Extract from the resume where possible. Use null for anything not in the resume. Structure:
-   - contact: { full_name, email, phone, city, state, country, linkedin_url }
+   - contact: { first_name, last_name, email, phone, city, state, country, linkedin_url }
    - current_or_most_recent_role: { job_title, company, start_date, end_date, summary }
    - work_experience: list of { job_title, company, start_date, end_date, summary } (most recent 2-3)
    - education: list of { degree, institution, year_or_date }
