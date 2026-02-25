@@ -9,6 +9,7 @@ export async function connectToBrowser(cdpUrl: string = "http://localhost:9222/"
     console.log('🔗 Connecting to Chrome...');
     const browser = await chromium.connectOverCDP(cdpUrl);
     const defaultContext = browser.contexts()[0];
+    defaultContext.setDefaultTimeout(9000); // 5s instead of 30s default
     const page = await defaultContext.newPage();
     console.log('✅ Connected to browser session.');
     return { browser, page };

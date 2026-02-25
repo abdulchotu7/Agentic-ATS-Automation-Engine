@@ -29,7 +29,7 @@ export async function runMcpAgent(page: any) {
     try {
         const agent = new Agent({
             name: "Job Application Agent",
-            model: "gpt-4o",
+            model: "gpt-4.1",
             modelSettings: {
                 parallelToolCalls: false,  // CRITICAL: force one tool call at a time for dropdown handling
             },
@@ -49,15 +49,24 @@ WORKFLOW:
 1. Call browser_snapshot to see the page.
 2. CHECK THE TAB: Look at the "Open tabs" list in the snapshot. If the current tab URL does not match the job application, use browser_tabs with action="select" and the correct index. Then browser_snapshot again.
 3. Read the snapshot carefully. Identify each form field by its label text and note its exact ref code.
-4. Fill each empty field ONE AT A TIME in order:
+4. Fill each empty field ONE AT A TIME in order. AFTER each field, verify it worked:
    - For textbox fields: use browser_type with the ref from the snapshot.
    - For NATIVE SELECT dropdowns (shown as "combobox" in snapshot with NO listbox/options visible):
      Use browser_select_option with the ref and the value text. Example: browser_select_option(ref="e63", values=["United States"]).
      This is the PREFERRED method for any standard HTML <select> element. ALWAYS try browser_select_option FIRST for dropdowns.
-   - For CUSTOM combobox/autocomplete (shown as "combobox" with a text input where you type to search):
+   - For AUTOCOMPLETE / TYPE-TO-SEARCH dropdowns (shown as a text input where you type to filter):
+     THIS IS CRITICAL — you MUST follow ALL these steps in order:
+     a. browser_type on the input ref to type a search term (e.g., first 3 letters of the city/state)
+     b. browser_wait_for with time=2 — WAIT for the dropdown options to load
+     c. browser_snapshot to see the dropdown options that appeared
+     d. browser_click on the correct option's ref from that NEW snapshot (option refs are DIFFERENT from the input ref!)
+     e. browser_snapshot to VERIFY the value was selected
+     NEVER skip steps b-d! If you type into an autocomplete field and move on without selecting from the dropdown, the value will NOT be saved.
+   - For CUSTOM combobox (click to open, then pick):
      a. browser_click on the combobox ref to open it
      b. browser_snapshot to see the dropdown options that appeared
-     c. browser_click on the correct option's ref from that NEW snapshot (option refs are DIFFERENT from the combobox ref!)
+     c. browser_click on the correct option's ref from that NEW snapshot
+     d. browser_snapshot to VERIFY the value was selected
    - For radio buttons: use browser_click on the correct radio option ref.
    - For checkboxes: use browser_click on the checkbox ref.
 5. After filling ALL fields, call browser_snapshot to verify everything is filled.
@@ -69,13 +78,16 @@ WORKFLOW:
    c. Click Submit/Save again
    d. browser_snapshot again to check
    e. Repeat up to 3 times
-9. Only respond with your final summary AFTER the page has changed to a success/confirmation page or the next step of the application.
+9. MULTI-PAGE FORMS: If clicking "Next" leads to another page with more fields, treat it as a new form — browser_snapshot, fill all fields, then continue.
+10. Only respond with your final summary AFTER the page has changed to a success/confirmation page or the next step of the application.
 
-DROPDOWN SELECTION CRITICAL RULES:
+DROPDOWN & COMBOBOX CRITICAL RULES:
 - ALWAYS try browser_select_option FIRST. It works for most standard dropdowns.
-- If browser_select_option fails, THEN use the 3-step click workflow.
+- If browser_select_option fails, THEN use the click workflow.
 - NEVER click the same ref twice hoping it will select an option. The combobox ref OPENS the dropdown; the OPTION ref (a different ref) SELECTS the value.
-- After each dropdown selection, call browser_snapshot to VERIFY the value was actually set.
+- After EVERY dropdown interaction, call browser_snapshot to VERIFY the value was actually set.
+- For type-to-search fields: you MUST wait (browser_wait_for time=2) after typing before snapshot. The options need time to load.
+- If no options appear after typing, try clearing and typing again with different text (e.g., full name vs abbreviation).
 
 RULES:
 - FULLY AUTOMATED: There is NO human available. You must NEVER ask the user for input, clarification, or missing data. NEVER stop and say "please provide X". You must fill EVERY field yourself.
@@ -102,11 +114,19 @@ CRITICAL — SUBMISSION VERIFICATION:
 - If the page still shows the form (no confirmation) → there are likely validation errors. Read the snapshot, fix the errors, and click Submit again.
 - NEVER report success unless you see a clear confirmation message or page change.
 
-CRITICAL — DO NOT OUTPUT TEXT PLANS:
-- NEVER respond with a text list of "I will fill these fields..." as your final output. That is NOT completing the task.
-- You MUST call browser tools (browser_type, browser_click, etc.) to ACTUALLY fill every field. Listing fields is not filling them.
+CRITICAL — DO NOT OUTPUT TEXT PLANS OR PROMISES:
+- NEVER respond with text like "I will fill...", "I will proceed...", "Please wait...", "Let me review..." as your final output. That is NOT completing the task — it is ABANDONING the task.
+- If you say "I will do X" — you MUST actually do X by calling a browser tool. If your next action would be text output, STOP and call a tool instead.
+- You MUST call browser tools (browser_type, browser_click, etc.) to ACTUALLY fill every field. Listing or describing fields is not filling them.
 - Your final text response should ONLY be a confirmation AFTER you have verified the submission via browser_snapshot and seen a confirmation page.
-- If you find empty fields, your VERY NEXT action must be a browser tool call, NOT a text summary.`,
+- If you find empty fields, your VERY NEXT action must be a browser tool call, NOT a text summary.
+
+CRITICAL — WAITING FOR PAGE CHANGES:
+- If you click a button that triggers processing (e.g., "Autofill with Resume", "Parse Resume", loading spinner), you MUST:
+  a. Call browser_wait_for with time=5 to wait for processing to complete
+  b. Call browser_snapshot to see the updated page
+  c. Continue filling any remaining empty fields
+  d. NEVER exit after clicking such a button — the work is not done until all fields are filled AND submitted.`,
             mcpServers: [playwrightMcp],
         });
 

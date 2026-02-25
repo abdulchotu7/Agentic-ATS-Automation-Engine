@@ -7,8 +7,8 @@ async function uploadResume(page: Page, filePath: string) {
     console.log(`📤 Uploading resume: ${filePath}...`);
     await page.locator('input#resume').setInputFiles(filePath);
     console.log('✅ Resume uploaded.');
-    console.log('⏳ Waiting 3s for auto-fill from resume...');
-    await page.waitForTimeout(3000);
+    console.log('⏳ Waiting 7s for auto-fill from resume...');
+    await page.waitForTimeout(7000);
 }
 
 async function fillPersonalDetails(page: Page, profile: ProfileData) {

@@ -1,0 +1,1 @@
+npx tsx myworkday.ts https://quantiphi.wd1.myworkdayjobs.com/en-US/Careers_at_Quantiphi/job/Senior-Data-Engineer--Snowflake-_JR8560

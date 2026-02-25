@@ -73,8 +73,8 @@ async function detectAndHandleCaptcha(page: Page) {
 async function fillPersonalDetails(page: Page, profile: ProfileData, resumePath: string) {
     console.log('📤 Uploading resume...');
     await page.locator('input[type="file"][name="resume"]').setInputFiles(resumePath);
-    console.log('⏳ Waiting 3s for auto-fill from resume...');
-    await page.waitForTimeout(3000);
+    console.log('⏳ Waiting 7s for auto-fill from resume...');
+    await page.waitForTimeout(7000);
 
     console.log('⌨️ Filling personal details (only empty fields)...');
     await fillIfEmpty(page.getByLabel("Phone"), profile.contact.phone || "1234567890", { label: "Phone" });
