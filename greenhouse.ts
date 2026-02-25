@@ -1,5 +1,5 @@
 import type { Page } from 'playwright';
-import { connectToBrowser, runWithErrorHandler } from './utils/browser.ts';
+import { connectToBrowser, runWithErrorHandler, tryStep } from './utils/browser.ts';
 import { runMcpAgent } from './agent/mcpAgent.ts';
 
 async function fillPersonalDetails(page: Page) {
@@ -38,12 +38,12 @@ async function fillLocation(page: Page) {
 runWithErrorHandler(async () => {
     const { page } = await connectToBrowser();
     console.log('🌐 Navigating to application page...');
-    await page.goto('https://job-boards.greenhouse.io/540/jobs/7614871003');
+    await page.goto('https://job-boards.greenhouse.io/evolver/jobs/4092128009');
     await page.waitForTimeout(2000);
 
-    await uploadResume(page, '/Users/consultadd/projects/ResumeProfilerandApply/uploads/20260213_185222_LAKS_VANSH_Resume._20260204-160700.docx');
-    await fillPersonalDetails(page);
-    await fillLocation(page);
+    await tryStep('Upload Resume', () => uploadResume(page, '/Users/consultadd/projects/ResumeProfilerandApply/uploads/20260213_185222_LAKS_VANSH_Resume._20260204-160700.docx'));
+    await tryStep('Personal Details', () => fillPersonalDetails(page));
+    await tryStep('Location', () => fillLocation(page));
 
     console.log('🤖 Handing off to MCP agent for remaining fields + submit...');
     await runMcpAgent(page);

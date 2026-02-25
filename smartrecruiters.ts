@@ -1,5 +1,5 @@
 import type { Page } from 'playwright';
-import { connectToBrowser, runWithErrorHandler } from './utils/browser.ts';
+import { connectToBrowser, runWithErrorHandler, tryStep } from './utils/browser.ts';
 import { client } from './agent/openaiClient.ts';
 import { runMcpAgent } from './agent/mcpAgent.ts';
 
@@ -61,10 +61,10 @@ runWithErrorHandler(async () => {
     console.log('🔘 Clicking "I\'m interested"...');
     await page.getByRole('link', { name: "I'm interested" }).first().click();
 
-    await uploadResume(page, '/Users/consultadd/projects/ResumeProfilerandApply/uploads/20260213_185222_LAKS_VANSH_Resume._20260204-160700.docx');
+    await tryStep('Upload Resume', () => uploadResume(page, '/Users/consultadd/projects/ResumeProfilerandApply/uploads/20260213_185222_LAKS_VANSH_Resume._20260204-160700.docx'));
     await page.waitForTimeout(1000);
-    await fillPersonalDetails(page, 'John', 'Doe', 'john.doe@example.com');
-    await fillExperienceDetails(page);
+    await tryStep('Personal Details', () => fillPersonalDetails(page, 'John', 'Doe', 'john.doe@example.com'));
+    await tryStep('Experience Details', () => fillExperienceDetails(page));
 
     await page.getByRole("button", { name: "Next" }).click();
     await page.waitForTimeout(1000);

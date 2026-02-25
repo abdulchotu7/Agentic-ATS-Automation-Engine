@@ -1,5 +1,5 @@
 import type { Page } from 'playwright';
-import { connectToBrowser, runWithErrorHandler } from './utils/browser.ts';
+import { connectToBrowser, runWithErrorHandler, tryStep } from './utils/browser.ts';
 import { answerScreeningQuestions } from './agent/screeningAgent.ts';
 
 /**
@@ -101,6 +101,6 @@ runWithErrorHandler(async () => {
     console.log('🔘 Clicking "Apply for this job"...');
     await page.getByRole('link', { name: 'Apply for this job' }).first().click();
 
-    await detectAndHandleCaptcha(page);
-    await fillPersonalDetails(page, 'John', 'Doe', 'john.doe@example.com');
+    await tryStep('CAPTCHA Check', async () => { await detectAndHandleCaptcha(page); });
+    await tryStep('Personal Details', () => fillPersonalDetails(page, 'John', 'Doe', 'john.doe@example.com'));
 });

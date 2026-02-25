@@ -44,36 +44,46 @@ CRITICAL REF RULES (READ THIS CAREFULLY):
 
 WORKFLOW:
 1. Call browser_snapshot to see the page.
-2. CHECK THE TAB: Look at the "Open tabs" list in the snapshot. If the current tab is NOT the job application form (e.g. it shows "Who's using Chrome?" or any other page), use browser_tabs with action="select" and the correct tab index to switch to the job application tab. Then call browser_snapshot again.
-3. Read the snapshot output carefully. Identify each form field by its label text and note its exact ref code.
+2. CHECK THE TAB: Look at the "Open tabs" list in the snapshot. If the current tab URL does not match the job application, use browser_tabs with action="select" and the correct index. Then browser_snapshot again.
+3. Read the snapshot carefully. Identify each form field by its label text and note its exact ref code.
 4. Fill each empty field ONE AT A TIME in order:
-   - For textbox fields: use browser_type with the ref from the snapshot
-   - For combobox/dropdown fields: MUST follow this 3-step process:
+   - For textbox fields: use browser_type with the ref from the snapshot.
+   - For NATIVE SELECT dropdowns (shown as "combobox" in snapshot with NO listbox/options visible):
+     Use browser_select_option with the ref and the value text. Example: browser_select_option(ref="e63", values=["United States"]).
+     This is the PREFERRED method for any standard HTML <select> element. ALWAYS try browser_select_option FIRST for dropdowns.
+   - For CUSTOM combobox/autocomplete (shown as "combobox" with a text input where you type to search):
      a. browser_click on the combobox ref to open it
      b. browser_snapshot to see the dropdown options that appeared
-     c. browser_click on the correct option's ref from that new snapshot
-   - For radio buttons: use browser_click on the correct radio option ref
-   - For checkboxes: use browser_click on the checkbox ref
-4. After filling ALL fields, call browser_snapshot to verify everything is filled.
-5. Click the "Submit" or "Next" button using browser_click with its ref.
-6. IMMEDIATELY call browser_snapshot to check the result.
-7. CHECK FOR VALIDATION ERRORS: If the page still shows the same form, has error messages, highlighted fields, or unfilled required fields, then:
-   a. Read the snapshot carefully to find which fields are still empty or have errors
+     c. browser_click on the correct option's ref from that NEW snapshot (option refs are DIFFERENT from the combobox ref!)
+   - For radio buttons: use browser_click on the correct radio option ref.
+   - For checkboxes: use browser_click on the checkbox ref.
+5. After filling ALL fields, call browser_snapshot to verify everything is filled.
+6. Click the "Submit", "Save", or "Next" button using browser_click with its ref.
+7. IMMEDIATELY call browser_snapshot to check the result.
+8. CHECK FOR VALIDATION ERRORS: If the page still shows the form with errors or unfilled required fields:
+   a. Read the snapshot to find which fields are still empty or have errors
    b. Fill those fields using the correct refs from the NEW snapshot (refs change after re-render!)
-   c. Click Submit again
-   d. Call browser_snapshot again to check
-   e. Repeat until submission succeeds or you have tried 3 times
-8. Only respond with your final summary AFTER the page has changed to a success/confirmation page.
+   c. Click Submit/Save again
+   d. browser_snapshot again to check
+   e. Repeat up to 3 times
+9. Only respond with your final summary AFTER the page has changed to a success/confirmation page or the next step of the application.
+
+DROPDOWN SELECTION CRITICAL RULES:
+- ALWAYS try browser_select_option FIRST. It works for most standard dropdowns.
+- If browser_select_option fails, THEN use the 3-step click workflow.
+- NEVER click the same ref twice hoping it will select an option. The combobox ref OPENS the dropdown; the OPTION ref (a different ref) SELECTS the value.
+- After each dropdown selection, call browser_snapshot to VERIFY the value was actually set.
 
 RULES:
+- FULLY AUTOMATED: There is NO human available. You must NEVER ask the user for input, clarification, or missing data. NEVER stop and say "please provide X". You must fill EVERY field yourself.
+- Use the candidate profile data above for all fields. If a field is not covered by the profile, use realistic dummy data (e.g., Street: "123 Main St", Zip: "10001", LinkedIn: "https://linkedin.com/in/laksvansh").
 - You MUST make only ONE tool call at a time. Wait for the result before making the next call.
-- For dropdown/combobox fields: you MUST follow the 3-step process (click → snapshot → select). Never skip the snapshot step.
-- Use realistic, professional answers based on the candidate profile.
 - For text answers, keep them concise (1-2 sentences max).
 - DO NOT use browser_navigate, browser_run_code, or browser_evaluate. Only use: browser_snapshot, browser_tabs, browser_type, browser_click, browser_select_option, browser_fill_form.
 - DO NOT navigate away from the current page or reload it.
 - NEVER finish or output a final message if there are validation errors. You MUST fix them and resubmit.
-- If you see a "Submit" button, click it. If you see "Next", click it to proceed to the next page.`,
+- If you see a "Submit" or "Save" button, click it. If you see "Next", click it to proceed to the next page.
+- NEVER stop early. Keep filling fields and submitting until you reach a confirmation/success page.`,
             mcpServers: [playwrightMcp],
         });
 
@@ -82,7 +92,7 @@ RULES:
             agent,
             `Call browser_snapshot now. Look at the "Open tabs" list and find the tab whose URL contains "${currentUrl}". If the current tab does not match, use browser_tabs with action="select" and the correct tab index to switch to it, then call browser_snapshot again. Once you are on the correct tab, read each field's label and ref from the snapshot and fill any EMPTY fields one by one using the exact ref codes. After all fields are filled, click the Submit button.`,
             {
-                maxTurns: 30,
+                maxTurns: 60,
                 stream: true
             }
         );

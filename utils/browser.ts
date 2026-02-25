@@ -30,3 +30,15 @@ export async function runWithErrorHandler(fn: () => Promise<void>) {
         process.exit(1);
     }
 }
+
+/**
+ * Runs an async step, catching errors so the script continues.
+ * The MCP agent will handle anything that fails here.
+ */
+export async function tryStep(name: string, fn: () => Promise<void>) {
+    try {
+        await fn();
+    } catch (error: any) {
+        console.warn(`⚠️ Step "${name}" failed: ${error.message} — MCP agent will handle it.`);
+    }
+}
