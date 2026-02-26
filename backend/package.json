@@ -1,7 +1,11 @@
 {
-  "name": "playwright",
+  "name": "resume-profiler-and-apply",
   "version": "1.0.0",
-  "description": "",
+  "description": "Unified Job Application Automation (Backend)",
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:ConsultaddHQ/ResumeProfilerandApply.git"
+  },
   "main": "src/router.ts",
   "scripts": {
     "router": "tsx src/router.ts",

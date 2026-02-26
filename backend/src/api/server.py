@@ -30,8 +30,8 @@ try:
 except (ImportError, ValueError):
     from job_search_agent import run_job_search
 
-# Path to the Playwright automation project (root directory)
-PLAYWRIGHT_DIR = Path(__file__).resolve().parent.parent.parent
+# Path to the Backend automation project (root relative to this file)
+BACKEND_DIR = Path(__file__).resolve().parent.parent.parent
 
 app = FastAPI(title="Resume Profiler & Apply")
 
@@ -45,8 +45,8 @@ app.add_middleware(
 )
 
 ALLOWED_EXTENSIONS = {".pdf", ".docx", ".doc", ".txt", ".md"}
-UPLOAD_DIR = PLAYWRIGHT_DIR / "uploads"
-RESULTS_DIR = PLAYWRIGHT_DIR / "results"
+UPLOAD_DIR = BACKEND_DIR / "uploads"
+RESULTS_DIR = BACKEND_DIR / "results"
 
 # Ensure directories exist
 UPLOAD_DIR.mkdir(exist_ok=True)
@@ -108,7 +108,7 @@ def _run_pipeline(task_id: str, resume_path: str, result_path: str) -> None:
         # Use Popen for live log streaming
         proc = subprocess.Popen(
             router_cmd,
-            cwd=str(PLAYWRIGHT_DIR),
+            cwd=str(BACKEND_DIR),
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,
@@ -250,7 +250,7 @@ def _run_router_only(task_id: str, result_json_path: str, limit: int) -> None:
 
         proc = subprocess.Popen(
             router_cmd,
-            cwd=str(PLAYWRIGHT_DIR),
+            cwd=str(BACKEND_DIR),
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,
@@ -288,7 +288,7 @@ async def run_from_json(
     """
     json_path = Path(result_json)
     if not json_path.is_absolute():
-        json_path = PLAYWRIGHT_DIR / json_path
+        json_path = BACKEND_DIR / json_path
 
     if not json_path.exists():
         raise HTTPException(status_code=404, detail=f"File not found: {json_path}")
@@ -314,7 +314,7 @@ async def list_results():
     return [
         {
             "filename": f.name,
-            "path": str(f.relative_to(PLAYWRIGHT_DIR)),
+            "path": str(f.relative_to(BACKEND_DIR)),
             "size_kb": round(f.stat().st_size / 1024, 1),
             "modified": datetime.fromtimestamp(f.stat().st_mtime).isoformat(),
         }
