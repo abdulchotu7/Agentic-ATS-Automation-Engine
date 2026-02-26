@@ -1,1 +1,1 @@
-npx tsx myworkday.ts https://quantiphi.wd1.myworkdayjobs.com/en-US/Careers_at_Quantiphi/job/Senior-Data-Engineer--Snowflake-_JR8560
+RESULT_JSON_PATH=/Users/consultadd/projects/ResumeProfilerandApply/results/20260226_160251_result.json npx tsx src/sites/greenhouse.ts "https://job-boards.greenhouse.io/coderoad/jobs/4110613009"

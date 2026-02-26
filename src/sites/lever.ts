@@ -1,7 +1,7 @@
 import type { Page } from 'playwright';
-import type { ProfileData } from './types.ts';
-import { connectToBrowser, runWithErrorHandler, tryStep, fillIfEmpty } from './utils/browser.ts';
-import { answerScreeningQuestions } from './agent/screeningAgent.ts';
+import type { ProfileData } from '../types.ts';
+import { connectToBrowser, runWithErrorHandler, tryStep, fillIfEmpty } from '../utils/browser.ts';
+import { answerScreeningQuestions } from '../agent/screeningAgent.ts';
 
 /**
  * Detects common CAPTCHA challenges by scanning the main page and all sub-frames.
@@ -122,7 +122,7 @@ export async function runLever(page: Page, jobUrl: string, profile: ProfileData,
     await page.goto(jobUrl);
 
     console.log('🔘 Clicking "Apply for this job"...');
-    await page.getByRole('link', { name: 'Apply for this job' }).first().click();
+    await tryStep('Apply Button', () => page.getByRole('link', { name: 'Apply for this job' }).first().click());
 
     await tryStep('CAPTCHA Check', async () => { await detectAndHandleCaptcha(page); });
     await tryStep('Personal Details', () => fillPersonalDetails(page, profile, resumePath));
@@ -133,8 +133,24 @@ if (process.argv[1]?.endsWith('lever.ts')) {
     runWithErrorHandler(async () => {
         const { page } = await connectToBrowser();
         const url = process.argv[2] || 'https://jobs.lever.co/findem/e74f2710-a87c-4532-8cdf-9f5d41ad2e06';
-        const { readFileSync } = await import('fs');
-        const data = JSON.parse(readFileSync('/Users/consultadd/projects/ResumeProfilerandApply/result.json', 'utf-8'));
+        const { readFileSync, readdirSync } = await import('fs');
+
+        // Find latest result.json if not provided in env
+        let jsonPath = process.env.RESULT_JSON_PATH || '';
+        if (!jsonPath) {
+            const resultsDir = './results';
+            try {
+                const files = readdirSync(resultsDir).filter(f => f.endsWith('_result.json')).sort().reverse();
+                jsonPath = files.length > 0 ? `${resultsDir}/${files[0]}` : './result.json';
+            } catch {
+                jsonPath = './result.json';
+            }
+        }
+        console.log(`📄 Using profile: ${jsonPath}`);
+
+        process.env.RESULT_JSON_PATH = jsonPath;
+
+        const data = JSON.parse(readFileSync(jsonPath, 'utf-8'));
         await runLever(page, url, data.application_data, data.resume_input);
     });
 }

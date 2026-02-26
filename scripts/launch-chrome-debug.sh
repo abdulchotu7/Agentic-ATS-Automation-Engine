@@ -32,7 +32,7 @@ if lsof -i :9222 > /dev/null 2>&1; then
     echo "   http://localhost:9222/json/version"
     echo ""
     echo "🎯 Now run your Playwright script:"
-    echo "   node index.ts"
+    echo "   npm run router -- --result result.json --dry-run"
 else
     echo "❌ Chrome is NOT listening on port 9222"
     echo "   Please check for errors above"

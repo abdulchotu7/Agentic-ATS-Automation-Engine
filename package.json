@@ -2,10 +2,9 @@
   "name": "playwright",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "src/router.ts",
   "scripts": {
-    "dev": "tsx index.ts",
-    "router": "tsx router.ts",
+    "router": "tsx src/router.ts",
     "build": "tsc"
   },
   "keywords": [],

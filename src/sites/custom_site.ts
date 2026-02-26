@@ -1,7 +1,7 @@
 import type { Page } from 'playwright';
-import type { ProfileData } from './types.ts';
-import { connectToBrowser, runWithErrorHandler } from './utils/browser.ts';
-import { runMcpAgent } from './agent/mcpAgent.ts';
+import type { ProfileData } from '../types.ts';
+import { connectToBrowser, runWithErrorHandler } from '../utils/browser.ts';
+import { runMcpAgent } from '../agent/mcpAgent.ts';
 
 /**
  * Exported handler for unknown/custom ATS sites.

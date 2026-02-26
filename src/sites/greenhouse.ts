@@ -1,7 +1,7 @@
 import type { Page } from 'playwright';
-import type { ProfileData } from './types.ts';
-import { connectToBrowser, runWithErrorHandler, tryStep, fillIfEmpty } from './utils/browser.ts';
-import { runMcpAgent } from './agent/mcpAgent.ts';
+import type { ProfileData } from '../types.ts';
+import { connectToBrowser, runWithErrorHandler, tryStep, fillIfEmpty } from '../utils/browser.ts';
+import { runMcpAgent } from '../agent/mcpAgent.ts';
 
 async function uploadResume(page: Page, filePath: string) {
     console.log(`📤 Uploading resume: ${filePath}...`);
@@ -77,8 +77,24 @@ if (process.argv[1]?.endsWith('greenhouse.ts')) {
     runWithErrorHandler(async () => {
         const { page } = await connectToBrowser();
         const url = process.argv[2] || 'https://job-boards.greenhouse.io/evolver/jobs/4092128009';
-        const { readFileSync } = await import('fs');
-        const data = JSON.parse(readFileSync('/Users/consultadd/projects/ResumeProfilerandApply/result.json', 'utf-8'));
+        const { readFileSync, readdirSync } = await import('fs');
+
+        // Find latest result.json if not provided in env
+        let jsonPath = process.env.RESULT_JSON_PATH || '';
+        if (!jsonPath) {
+            const resultsDir = './results';
+            try {
+                const files = readdirSync(resultsDir).filter(f => f.endsWith('_result.json')).sort().reverse();
+                jsonPath = files.length > 0 ? `${resultsDir}/${files[0]}` : './result.json';
+            } catch {
+                jsonPath = './result.json';
+            }
+        }
+        console.log(`📄 Using profile: ${jsonPath}`);
+
+        process.env.RESULT_JSON_PATH = jsonPath;
+
+        const data = JSON.parse(readFileSync(jsonPath, 'utf-8'));
         await runGreenhouse(page, url, data.application_data, data.resume_input);
     });
 }

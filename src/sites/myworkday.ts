@@ -1,7 +1,7 @@
 import type { Page } from 'playwright';
-import type { ProfileData } from './types.ts';
-import { connectToBrowser, runWithErrorHandler, tryStep, fillIfEmpty } from './utils/browser.ts';
-import { runMcpAgent } from './agent/mcpAgent.ts';
+import type { ProfileData } from '../types.ts';
+import { connectToBrowser, runWithErrorHandler, tryStep, fillIfEmpty } from '../utils/browser.ts';
+import { runMcpAgent } from '../agent/mcpAgent.ts';
 
 
 async function uploadResume(page: Page, resumePath: string) {
@@ -44,9 +44,9 @@ export async function runWorkday(page: Page, jobUrl: string, profile: ProfileDat
     await tryStep("Create Account", () => page.getByRole("button", { name: "Create Account" }).click());
     await page.waitForTimeout(5000);
 
-    await tryStep("Sign In",() => page.getByRole("textbox", { name: "Email Address" }).fill(profile.contact.email));
-    await tryStep("Sign In",() => page.getByRole("textbox", { name: "Password", exact: true }).pressSequentially("Myworkday@789", { delay: 100 }));
-    await tryStep("Sign In",() => page.getByRole("button", { name: "Sign In" }).click());
+    await tryStep("Sign In", () => page.getByRole("textbox", { name: "Email Address" }).fill(profile.contact.email));
+    await tryStep("Sign In", () => page.getByRole("textbox", { name: "Password", exact: true }).pressSequentially("Myworkday@789", { delay: 100 }));
+    await tryStep("Sign In", () => page.getByRole("button", { name: "Sign In" }).click());
     await page.waitForTimeout(5000);
 
     console.log('📤 [9/9] Uploading resume...');
@@ -74,7 +74,7 @@ if (process.argv[1]?.endsWith('myworkday.ts')) {
         const { readFileSync } = await import('fs');
 
         const jsonPath = process.env.RESULT_JSON_PATH
-            || '/Users/consultadd/projects/ResumeProfilerandApply/result.json';
+            || './result.json';
         console.log(`📄 Loading profile from: ${jsonPath}`);
         const data = JSON.parse(readFileSync(jsonPath, 'utf-8'));
 

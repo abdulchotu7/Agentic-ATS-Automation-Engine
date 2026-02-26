@@ -1,24 +1,17 @@
-#!/usr/bin/env npx tsx
-/**
- * Job Automation Router
- *
- * Reads the result JSON from job_search_agent.py, matches each job URL
- * to the correct ATS automation handler, and runs them sequentially.
- *
- * Usage:
- *   npx tsx router.ts --result /path/to/result.json [--dry-run] [--limit N]
- */
+
+// Usage:
+//   npx tsx router.ts --result /path/to/result.json [--dry-run] [--limit N]
 
 import { readFileSync } from 'fs';
 import type { Page } from 'playwright';
 import { connectToBrowser } from './utils/browser.ts';
-import type { JobSearchResult, JobEntry, ProfileData, AutomationResult } from './types.ts';
+import type { JobSearchResult, ProfileData, AutomationResult } from './types.ts';
 
 // ── Import automation handlers ──────────────────────────────────────────────
-import { runGreenhouse } from './greenhouse.ts';
-import { runLever } from './lever.ts';
-import { runSmartRecruiters } from './smartrecruiters.ts';
-import { runCustomSite } from './custom_site.ts';
+import { runGreenhouse } from './sites/greenhouse.ts';
+import { runLever } from './sites/lever.ts';
+import { runSmartRecruiters } from './sites/smartrecruiters.ts';
+import { runCustomSite } from './sites/custom_site.ts';
 
 // ── URL → Handler mapping ───────────────────────────────────────────────────
 
@@ -51,21 +44,6 @@ function getHandler(url: string): HandlerConfig {
         return HANDLERS.custom;
     }
 }
-
-// ── Timeout helper ──────────────────────────────────────────────────────────
-
-function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
-    return new Promise<T>((resolve, reject) => {
-        const timer = setTimeout(() => {
-            reject(new Error(`⏰ Timeout: "${label}" exceeded ${Math.round(ms / 60000)} min limit`));
-        }, ms);
-        promise
-            .then((val) => { clearTimeout(timer); resolve(val); })
-            .catch((err) => { clearTimeout(timer); reject(err); });
-    });
-}
-
-// ── CLI argument parsing ────────────────────────────────────────────────────
 
 const DEFAULT_TIMEOUT_MINS = 10;
 

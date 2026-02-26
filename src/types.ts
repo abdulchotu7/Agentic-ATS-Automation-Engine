@@ -1,7 +1,3 @@
-/**
- * Shared TypeScript interfaces for the job automation router.
- * These types mirror the JSON structure output by job_search_agent.py.
- */
 
 export interface ContactInfo {
     first_name: string;

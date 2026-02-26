@@ -7,6 +7,28 @@ node_modules/
 /playwright/.cache/
 /playwright/.auth/
 
+# Environment and Results
+.env
+result.json
+results/
+*.json_result.json
+
+# Build
+dist/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+env/
+venv/
+.python-version
+
 # Git worktrees
 .worktrees/
 .playwright-mcp

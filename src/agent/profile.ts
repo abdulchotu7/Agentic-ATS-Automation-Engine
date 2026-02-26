@@ -1,4 +1,4 @@
-import { readFileSync } from 'fs';
+import { readFileSync, readdirSync } from 'fs';
 
 // ── Lazy-loaded profile ─────────────────────────────────────────────────────
 // The result JSON path comes from RESULT_JSON_PATH env var (set by router.ts)
@@ -10,8 +10,24 @@ let _cached: { profile: string; resumePath: string } | null = null;
 function _load(): { profile: string; resumePath: string } {
    if (_cached) return _cached;
 
-   const jsonPath = process.env.RESULT_JSON_PATH
-      || '/Users/consultadd/projects/ResumeProfilerandApply/result.json';
+   let jsonPath = process.env.RESULT_JSON_PATH || '';
+   if (!jsonPath) {
+      // Find the latest result.json in the results directory
+      const resultsDir = './results';
+      try {
+         const files = readdirSync(resultsDir)
+            .filter((f: string) => f.endsWith('_result.json'))
+            .sort()
+            .reverse();
+         if (files.length > 0) {
+            jsonPath = `${resultsDir}/${files[0]}`;
+         } else {
+            jsonPath = './result.json';
+         }
+      } catch {
+         jsonPath = './result.json';
+      }
+   }
 
    console.log(`📄 Loading profile from: ${jsonPath}`);
    const raw = JSON.parse(readFileSync(jsonPath, 'utf-8'));
