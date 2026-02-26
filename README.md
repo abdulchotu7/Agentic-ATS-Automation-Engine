@@ -13,7 +13,7 @@ Automated job application system using Playwright and AI (OpenAI Agents SDK).
    Create a `.env` file in the root directory and add your API keys:
    ```env
    OPENAI_API_KEY=your_openai_key
-   TAVILY_API_KEY=your_tavily_key
+   TAVILY_API_KEY=your_tavily_api_key
    ```
 
 3. **Launch Chrome in Debug Mode**:
@@ -23,6 +23,25 @@ Automated job application system using Playwright and AI (OpenAI Agents SDK).
    ./scripts/launch-chrome-debug.sh
    ```
    *Note: Ensure you are logged into the necessary sites (LinkedIn, etc.) in the opened Chrome window.*
+
+### 3. Backend Server (Optional)
+Starts a FastAPI server to handle resume uploads and job search in the background.
+
+```bash
+# 1. Create a virtual environment (recommended)
+python3 -m venv venv
+
+# 2. Activate the virtual environment
+source venv/bin/activate
+
+# 3. Install Python dependencies
+pip install -r requirements.txt
+
+# 4. Start the server
+npm run server
+```
+The server will be available at `http://localhost:8000`.
+You can verify it is running at `http://localhost:8000/health`.
 
 ## 🛠️ Usage
 
@@ -67,8 +86,10 @@ RESULT_JSON_PATH=result.json npx tsx src/sites/myworkday.ts "https://wd1.myworkd
 - `src/router.ts`: Main entry point for processing multiple jobs.
 - `src/sites/`: Site-specific automation handlers (Greenhouse, Lever, etc.).
 - `src/agent/`: AI agent logic for handling complex forms and screening questions.
+- `src/api/`: Backend server and job search agent (Python).
 - `src/utils/`: Shared browser and utility functions.
-- `scripts/`: Helper scripts for launching Chrome and searching for jobs (Python).
+- `scripts/`: Helper scripts for launching Chrome.
+- `requirements.txt`: Python backend dependencies.
 
 ## 🤖 AI Fallback
 The `custom_site.ts` handler and MCP agent serve as universal fallbacks. If a site is not specifically supported, the AI agent will attempt to navigate, scan, and fill the form autonomously.

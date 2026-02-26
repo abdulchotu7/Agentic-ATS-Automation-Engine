@@ -1,1 +1,0 @@
-RESULT_JSON_PATH=/Users/consultadd/projects/ResumeProfilerandApply/results/20260226_160251_result.json npx tsx src/sites/greenhouse.ts "https://job-boards.greenhouse.io/coderoad/jobs/4110613009"

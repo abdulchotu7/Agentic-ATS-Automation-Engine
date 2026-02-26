@@ -32,3 +32,6 @@ venv/
 # Git worktrees
 .worktrees/
 .playwright-mcp
+uploads
+.env
+temp.txt

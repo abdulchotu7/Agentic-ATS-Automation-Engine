@@ -5,7 +5,8 @@
   "main": "src/router.ts",
   "scripts": {
     "router": "tsx src/router.ts",
-    "build": "tsc"
+    "build": "tsc",
+    "server": "bash -c 'if [ -f venv/bin/uvicorn ]; then venv/bin/uvicorn src.api.server:app --reload; else uvicorn src.api.server:app --reload; fi'"
   },
   "keywords": [],
   "author": "",
@@ -19,7 +20,10 @@
   },
   "dependencies": {
     "@openai/agents": "^0.4.15",
+    "@openai/agents-core": "^0.0.1",
     "dotenv": "^17.3.1",
+    "openai": "^4.85.4",
+    "playwright": "^1.50.1",
     "zod": "^4.3.6"
   }
 }
