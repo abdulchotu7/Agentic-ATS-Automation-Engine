@@ -4,10 +4,17 @@ Automated job application system using Playwright and AI (OpenAI Agents SDK).
 
 ## 🚀 Setup
 
-1. **Install Dependencies**:
+1. **Clone and Navigate**:
+   ```bash
+   git clone git@github.com:ConsultaddHQ/ResumeProfilerandApply.git
+   cd ResumeProfilerandApply/backend
+   ```
+
+2. **Install Dependencies**:
    ```bash
    npm install
    ```
+   *Note: If you encounter peer dependency conflicts, use `npm install --legacy-peer-deps`.*
 
 2. **Configure Environment**:
    Create a `.env` file in the root directory and add your API keys:
