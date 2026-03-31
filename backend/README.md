@@ -1,4 +1,4 @@
-# Resume Profiler & Apply - Backend
+# Agentic ATS Automation Engine - Backend
 
 Automated job application system using Playwright and AI (OpenAI Agents SDK).
 
