@@ -1,4 +1,4 @@
-# Resume Profiler & Apply - Monorepo
+# Agentic-ATS-Automation-Engine - Monorepo
 
 This repository contains both the Backend (LLM-based job search + Playwright automation) and the Frontend (Web uploader).
 
