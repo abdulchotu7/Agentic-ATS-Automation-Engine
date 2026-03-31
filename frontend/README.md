@@ -1,4 +1,4 @@
-# Resume Profiler & Apply - Frontend
+# Agentic ATS Automation Engine - Frontend
 
 A modern, high-performance React application for seamless resume uploads and processing. Featuring a sleek, professional monochrome design with real-time status tracking via Server-Sent Events (SSE).
 
